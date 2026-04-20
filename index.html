@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Application Tracker</title>
+  <style>
+    /* ── Reset & Base ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #ffffff;
+      --bg-2:      #f6f8fa;
+      --bg-3:      #f0f2f5;
+      --text:      #1a1a2e;
+      --text-2:    #57606a;
+      --text-3:    #aaaaaa;
+      --border:    #d0d7de;
+      --border-2:  #e5e8ec;
+      --blue-bg:   #e6f1fb;
+      --blue-text: #0c447c;
+      --green-bg:  #dafbe1;
+      --green-text:#1a6627;
+      --amber-bg:  #fff8c5;
+      --amber-text:#633806;
+      --red-bg:    #fcebeb;
+      --red-text:  #791f1f;
+      --purple-bg: #f0eeff;
+      --purple-text:#3c3489;
+      --gray-bg:   #f1efe8;
+      --gray-text: #444441;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --shadow:    0 1px 3px rgba(0,0,0,.08);
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:        #0d1117;
+        --bg-2:      #161b22;
+        --bg-3:      #21262d;
+        --text:      #e6edf3;
+        --text-2:    #8b949e;
+        --text-3:    #484f58;
+        --border:    #30363d;
+        --border-2:  #21262d;
+        --blue-bg:   #0c2d4e;
+        --blue-text: #79c0ff;
+        --green-bg:  #0d2b14;
+        --green-text:#56d364;
+        --amber-bg:  #2e1f00;
+        --amber-text:#e3b341;
+        --red-bg:    #2d0f0f;
+        --red-text:  #ff7b72;
+        --purple-bg: #1e1040;
+        --purple-text:#c5b8ff;
+        --gray-bg:   #1c1c1c;
+        --gray-text: #8b949e;
+        --shadow:    0 1px 3px rgba(0,0,0,.3);
+      }
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg-3);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Layout ─────────────────────────────────────────────────── */
+    .page { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-icon {
+      width: 36px; height: 36px;
+      background: var(--blue-bg);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .brand-name { font-size: 18px; font-weight: 600; color: var(--text); }
+    .brand-sub  { font-size: 12px; color: var(--text-2); }
+
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .saved-label { font-size: 12px; color: var(--text-3); }
+
+    /* ── Stat cards ─────────────────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+    @media (max-width: 600px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
+
+    .stat-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+    }
+    .stat-n { font-size: 24px; font-weight: 700; color: var(--text); line-height: 1; }
+    .stat-l { font-size: 11px; color: var(--text-2); margin-top: 4px; }
+
+    /* ── Toolbar ────────────────────────────────────────────────── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 1rem;
+    }
+    .filter-btn {
+      padding: 5px 13px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--bg);
+      color: var(--text-2);
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .filter-btn:hover { background: var(--bg-2); color: var(--text); }
+    .filter-btn.active { background: var(--blue-bg); color: var(--blue-text); border-color: transparent; }
+
+    .spacer { flex: 1; }
+
+    .search-box {
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      background: var(--bg);
+      color: var(--text);
+      width: 200px;
+    }
+    .search-box:focus { outline: none; border-color: var(--blue-text); box-shadow: 0 0 0 3px rgba(12,68,124,.12); }
+
+    .add-btn {
+      padding: 7px 16px;
+      border-radius: var(--radius-md);
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #2da44e;
+      color: #ffffff;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .add-btn:hover { background: #26923f; }
+
+    /* ── Table ──────────────────────────────────────────────────── */
+    .tbl-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .tbl-wrap { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 780px; }
+    thead { background: var(--bg-2); }
+    th {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-2);
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      white-space: nowrap;
+    }
+    td {
+      font-size: 13px;
+      color: var(--text);
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-2);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr { transition: background 0.1s; }
+    tbody tr:hover { background: var(--bg-2); }
+
+    /* column widths */
+    .c-co   { width: 18%; }
+    .c-role { width: 20%; }
+    .c-st   { width: 12%; }
+    .c-dt   { width: 10%; }
+    .c-pr   { width: 8%;  }
+    .c-ref  { width: 13%; }
+    .c-next { width: 14%; }
+    .c-act  { width: 5%; text-align: right; }
+
+    .co-name { font-weight: 600; }
+    .co-name a { color: var(--text); text-decoration: none; }
+    .co-name a:hover { color: var(--blue-text); text-decoration: underline; }
+    .co-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+    .next-txt { font-size: 12px; color: var(--text-2); max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ── Badges ─────────────────────────────────────────────────── */
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 99px;
+      white-space: nowrap;
+    }
+    .s-wishlist  { background: var(--gray-bg);   color: var(--gray-text); }
+    .s-applied   { background: var(--blue-bg);   color: var(--blue-text); }
+    .s-screening { background: var(--purple-bg); color: var(--purple-text); }
+    .s-interview { background: var(--amber-bg);  color: var(--amber-text); }
+    .s-offer     { background: var(--green-bg);  color: var(--green-text); }
+    .s-rejected  { background: var(--red-bg);    color: var(--red-text); }
+    .s-withdrawn { background: var(--gray-bg);   color: var(--gray-text); }
+
+    .pri-high { color: var(--red-text); font-weight: 700; }
+    .pri-med  { color: var(--amber-text); font-weight: 700; }
+    .pri-low  { color: var(--text-2); }
+
+    .ref-yes { background: var(--green-bg); color: var(--green-text); font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 600; display: inline-block; }
+    .ref-no  { color: var(--text-3); font-size: 11px; }
+
+    /* ── Row action buttons ─────────────────────────────────────── */
+    .row-actions { display: flex; gap: 4px; justify-content: flex-end; opacity: 0; transition: opacity 0.15s; }
+    tbody tr:hover .row-actions { opacity: 1; }
+    .icon-btn {
+      width: 28px; height: 28px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      color: var(--text-2);
+      cursor: pointer;
+      font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.12s;
+    }
+    .icon-btn:hover { background: var(--bg-3); color: var(--text); }
+    .icon-btn.danger:hover { background: var(--red-bg); color: var(--red-text); border-color: var(--red-text); }
+
+    /* ── Empty state ────────────────────────────────────────────── */
+    .empty-state {
+      padding: 3rem 1rem;
+      text-align: center;
+      color: var(--text-2);
+    }
+    .empty-icon { font-size: 36px; margin-bottom: 12px; }
+    .empty-state h3 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .empty-state p  { font-size: 13px; }
+
+    /* ── Modal overlay ──────────────────────────────────────────── */
+    .overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .overlay.open { display: flex; }
+
+    .modal {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .modal-header h2 { font-size: 17px; font-weight: 600; color: var(--text); }
+    .close-btn {
+      width: 30px; height: 30px;
+      border: none; background: none;
+      color: var(--text-2);
+      cursor: pointer; font-size: 18px;
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .close-btn:hover { background: var(--bg-2); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+    input, select, textarea {
+      padding: 8px 11px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      font-family: var(--font);
+      width: 100%;
+      transition: border-color 0.15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--blue-text);
+      box-shadow: 0 0 0 3px rgba(12,68,124,.12);
+    }
+    textarea { resize: vertical; min-height: 72px; }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-2);
+    }
+    .btn-cancel {
+      padding: 8px 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg);
+      color: var(--text-2);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .btn-cancel:hover { background: var(--bg-2); }
+    .btn-save {
+      padding: 8px 20px;
+      border: none;
+      border-radius: var(--radius-md);
+      background: #2da44e;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-save:hover { background: #26923f; }
+
+    /* ── Detail panel ───────────────────────────────────────────── */
+    .detail-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.35);
+      z-index: 90;
+    }
+    .detail-overlay.open { display: block; }
+
+    .detail-panel {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 380px;
+      max-width: 95vw;
+      background: var(--bg);
+      border-left: 1px solid var(--border);
+      box-shadow: -4px 0 24px rgba(0,0,0,.12);
+      padding: 1.5rem;
+      overflow-y: auto;
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+      z-index: 91;
+    }
+    .detail-panel.open { transform: translateX(0); }
+    .detail-close {
+      position: absolute; top: 14px; right: 14px;
+      border: none; background: none;
+      font-size: 20px; color: var(--text-2);
+      cursor: pointer; border-radius: var(--radius-sm);
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .detail-close:hover { background: var(--bg-2); }
+    .detail-company { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .detail-role    { font-size: 14px; color: var(--text-2); margin-bottom: 1rem; }
+    .detail-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border-2); gap: 12px; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-key { font-size: 12px; font-weight: 600; color: var(--text-2); flex-shrink: 0; }
+    .detail-val { font-size: 13px; color: var(--text); text-align: right; word-break: break-word; }
+    .detail-notes-section { margin-top: 1rem; }
+    .detail-notes-label { font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
+    .detail-notes-body {
+      background: var(--bg-2);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+    .detail-actions { display: flex; gap: 8px; margin-top: 1.25rem; }
+    .detail-edit-btn {
+      flex: 1;
+      padding: 9px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .detail-edit-btn:hover { background: var(--bg-2); }
+
+    /* ── Toast ──────────────────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--text);
+      color: var(--bg);
+      padding: 10px 20px;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 200;
+      transition: transform 0.3s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Export row ─────────────────────────────────────────────── */
+    .footer-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .footer-note { font-size: 12px; color: var(--text-3); }
+    .export-btn {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg);
+      color: var(--text-2);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .export-btn:hover { background: var(--bg-2); color: var(--text); }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-icon">&#128196;</div>
+      <div>
+        <div class="brand-name">Job Application Tracker</div>
+        <div class="brand-sub">Track every application · Stay organised · Land the role</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="saved-label" id="saved-label"></span>
+      <button class="export-btn" onclick="exportCSV()">&#8595; Export CSV</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row" id="stats-row"></div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <button class="filter-btn active" data-filter="All"     onclick="setFilter('All')">All</button>
+    <button class="filter-btn"        data-filter="Wishlist" onclick="setFilter('Wishlist')">Wishlist</button>
+    <button class="filter-btn"        data-filter="Applied"  onclick="setFilter('Applied')">Applied</button>
+    <button class="filter-btn"        data-filter="Screening" onclick="setFilter('Screening')">Screening</button>
+    <button class="filter-btn"        data-filter="Interview" onclick="setFilter('Interview')">Interview</button>
+    <button class="filter-btn"        data-filter="Offer"    onclick="setFilter('Offer')">Offer</button>
+    <button class="filter-btn"        data-filter="Rejected" onclick="setFilter('Rejected')">Rejected</button>
+    <div class="spacer"></div>
+    <input class="search-box" type="search" id="search-box" placeholder="&#128269; Search company or role..." oninput="render()" />
+    <button class="add-btn" onclick="openModal()">+ Add application</button>
+  </div>
+
+  <!-- Table -->
+  <div class="tbl-card">
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="c-co">Company</th>
+            <th class="c-role">Role</th>
+            <th class="c-st">Status</th>
+            <th class="c-dt">Date applied</th>
+            <th class="c-pr">Priority</th>
+            <th class="c-ref">Referral</th>
+            <th class="c-next">Next action</th>
+            <th class="c-act"></th>
+          </tr>
+        </thead>
+        <tbody id="tbl-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer-bar">
+    <span class="footer-note" id="row-count"></span>
+    <button class="export-btn" onclick="clearAll()" style="color: var(--red-text);">Clear all data</button>
+  </div>
+
+</div><!-- /page -->
+
+
+<!-- ── Add / Edit Modal ────────────────────────────────────────── -->
+<div class="overlay" id="modal-overlay" onclick="overlayClick(event)">
+  <div class="modal" id="modal-box">
+    <div class="modal-header">
+      <h2 id="modal-title">Add application</h2>
+      <button class="close-btn" onclick="closeModal()">&#10005;</button>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="f-company">Company *</label>
+        <input id="f-company" placeholder="Google, Anthropic, Stripe…" />
+      </div>
+      <div class="form-group">
+        <label for="f-role">Role *</label>
+        <input id="f-role" placeholder="Principal ML Engineer" />
+      </div>
+      <div class="form-group">
+        <label for="f-status">Status</label>
+        <select id="f-status">
+          <option>Wishlist</option>
+          <option>Applied</option>
+          <option>Screening</option>
+          <option>Interview</option>
+          <option>Offer</option>
+          <option>Rejected</option>
+          <option>Withdrawn</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="f-priority">Priority</label>
+        <select id="f-priority">
+          <option>High</option>
+          <option>Medium</option>
+          <option>Low</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="f-date">Date applied</label>
+        <input id="f-date" type="date" />
+      </div>
+      <div class="form-group">
+        <label for="f-salary">Salary / CTC (LPA)</label>
+        <input id="f-salary" placeholder="e.g. 60–80 LPA" />
+      </div>
+      <div class="form-group full">
+        <label for="f-url">Job URL</label>
+        <input id="f-url" type="url" placeholder="https://careers.company.com/…" />
+      </div>
+      <div class="form-group full">
+        <label for="f-referral">Referral contact</label>
+        <input id="f-referral" placeholder="Name · Company · LinkedIn URL" />
+      </div>
+      <div class="form-group">
+        <label for="f-hm">Team / Hiring manager</label>
+        <input id="f-hm" placeholder="ML Platform team" />
+      </div>
+      <div class="form-group">
+        <label for="f-rounds">Interview rounds</label>
+        <input id="f-rounds" placeholder="e.g. 5 — coding, ML design, bar raiser" />
+      </div>
+      <div class="form-group full">
+        <label for="f-next">Next action</label>
+        <input id="f-next" placeholder="e.g. Send referral ask to Rahul by Friday" />
+      </div>
+      <div class="form-group full">
+        <label for="f-notes">Notes</label>
+        <textarea id="f-notes" placeholder="Prep notes, culture observations, recruiter contact, deadlines…"></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save"   onclick="saveApp()">Save application</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── Detail side panel ──────────────────────────────────────── -->
+<div class="detail-overlay" id="detail-overlay" onclick="closeDetail()"></div>
+<div class="detail-panel" id="detail-panel">
+  <button class="detail-close" onclick="closeDetail()">&#10005;</button>
+  <div id="detail-content"></div>
+</div>
+
+
+<!-- ── Toast ──────────────────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+
+<!-- ── JavaScript ─────────────────────────────────────────────── -->
+<script>
+  /* ── Data ─────────────────────────────────────────────────────── */
+  const STORAGE_KEY = 'jat_apps_v1';
+
+  const SAMPLE_DATA = [
+    { id:'s1', company:'Google DeepMind', role:'Staff ML Engineer',         status:'Interview', date:'2025-04-10', priority:'High',   referral:'Amit S. (ex-Oracle)', url:'',                               hm:'Perception team',    salary:'80–120 LPA', rounds:'5 rounds — coding, ML design, leadership, bar raiser', next:'Prepare RAG system design — Apr 24', notes:'Recruiter: Priya M.\nStrong fit for MLOps background. Focus on scale questions.' },
+    { id:'s2', company:'Anthropic',       role:'MTS — Infra',               status:'Applied',   date:'2025-04-14', priority:'High',   referral:'',                    url:'https://anthropic.com/careers',  hm:'Model infrastructure',salary:'',            rounds:'',                next:'Follow up if no response by Apr 28',      notes:'Remote-first. Strong reliability engineering focus.' },
+    { id:'s3', company:'Sarvam AI',       role:'Principal AI Engineer',     status:'Screening', date:'2025-04-08', priority:'High',   referral:'Vikram N. @ Sarvam',  url:'',                               hm:'Karthik (CTO)',       salary:'50–70 LPA',   rounds:'3 rounds',        next:'CTO call on Apr 24 at 11 AM',            notes:'Series A. Interesting LLM infra scope. Equity component.' },
+    { id:'s4', company:'Microsoft',       role:'Principal Engineer — AI',   status:'Wishlist',  date:'',           priority:'Medium', referral:'',                    url:'',                               hm:'',                    salary:'',            rounds:'',                next:'Find referral on LinkedIn',               notes:'India lab. Good WLB. Strong infra team.' },
+    { id:'s5', company:'Swiggy',          role:'Director of ML Engineering',status:'Rejected',  date:'2025-03-28', priority:'Medium', referral:'',                    url:'',                               hm:'',                    salary:'',            rounds:'2 rounds',        next:'—',                                       notes:'Rejected after HM screen. Feedback: wanted more recsys experience.' },
+    { id:'s6', company:'PhonePe',         role:'Lead AI/ML Engineer',       status:'Offer',     date:'2025-03-15', priority:'Low',    referral:'Sana K. @ PhonePe',   url:'',                               hm:'Rahul (VP Eng)',      salary:'55 LPA + ESOP',rounds:'4 rounds',   next:'Respond by Apr 30',                       notes:'Offer letter received. Negotiating ESOP cliff.' },
+  ];
+
+  let apps = [];
+  let curFilter = 'All';
+  let detailId  = null;
+  let editId    = null;
+
+  /* ── Persistence ──────────────────────────────────────────────── */
+  function loadData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      apps = raw ? JSON.parse(raw) : SAMPLE_DATA;
+    } catch(e) {
+      apps = SAMPLE_DATA;
+    }
+  }
+
+  function saveData() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(apps));
+      const el = document.getElementById('saved-label');
+      if (el) el.textContent = 'Saved at ' + new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    } catch(e) {}
+  }
+
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  /* ── Status helpers ───────────────────────────────────────────── */
+  const STATUS_CLASS = {
+    Wishlist:'s-wishlist', Applied:'s-applied', Screening:'s-screening',
+    Interview:'s-interview', Offer:'s-offer', Rejected:'s-rejected', Withdrawn:'s-withdrawn'
+  };
+
+  function priClass(p) {
+    return p === 'High' ? 'pri-high' : p === 'Medium' ? 'pri-med' : 'pri-low';
+  }
+
+  function fmtDate(d) {
+    if (!d) return '—';
+    const dt = new Date(d + 'T00:00:00');
+    return dt.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+  }
+
+  /* ── Stats ────────────────────────────────────────────────────── */
+  function renderStats() {
+    const counts = { Total: apps.length, Pipeline: 0, Offer: 0, Applied: 0, Rejected: 0 };
+    apps.forEach(a => {
+      if (a.status === 'Interview' || a.status === 'Screening') counts.Pipeline++;
+      if (a.status === 'Offer')    counts.Offer++;
+      if (a.status === 'Applied')  counts.Applied++;
+      if (a.status === 'Rejected') counts.Rejected++;
+    });
+    const rate = counts.Total > 0 ? Math.round((counts.Pipeline / counts.Total) * 100) : 0;
+    document.getElementById('stats-row').innerHTML = [
+      [counts.Total,    'Total tracked'],
+      [counts.Applied,  'Applied'],
+      [counts.Pipeline, 'In pipeline'],
+      [counts.Offer,    'Offers'],
+      [rate + '%',      'Interview rate'],
+    ].map(([n, l]) => `
+      <div class="stat-card">
+        <div class="stat-n">${n}</div>
+        <div class="stat-l">${l}</div>
+      </div>`).join('');
+  }
+
+  /* ── Filter ───────────────────────────────────────────────────── */
+  function setFilter(f) {
+    curFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.filter === f);
+    });
+    render();
+  }
+
+  /* ── Main render ─────────────────────────────────────────────── */
+  function render() {
+    renderStats();
+    const query = (document.getElementById('search-box')?.value || '').toLowerCase().trim();
+    let filtered = apps;
+    if (curFilter !== 'All') filtered = filtered.filter(a => a.status === curFilter);
+    if (query)               filtered = filtered.filter(a =>
+      a.company.toLowerCase().includes(query) || a.role.toLowerCase().includes(query)
+    );
+
+    document.getElementById('row-count').textContent =
+      filtered.length + ' of ' + apps.length + ' application' + (apps.length !== 1 ? 's' : '');
+
+    const tbody = document.getElementById('tbl-body');
+    if (!filtered.length) {
+      tbody.innerHTML = `
+        <tr><td colspan="8">
+          <div class="empty-state">
+            <div class="empty-icon">&#128196;</div>
+            <h3>${query ? 'No results found' : 'No applications yet'}</h3>
+            <p>${query ? 'Try a different search term.' : 'Click "+ Add application" to track your first role.'}</p>
+          </div>
+        </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(a => {
+      const sc  = STATUS_CLASS[a.status] || 's-applied';
+      const co  = a.url
+        ? `<a href="${escHtml(a.url)}" target="_blank" rel="noopener">${escHtml(a.company)}</a>`
+        : escHtml(a.company);
+      const ref = a.referral
+        ? `<span class="ref-yes">Yes</span> <span style="font-size:11px;color:var(--text-2);display:block;margin-top:2px">${escHtml(a.referral.split('·')[0].trim())}</span>`
+        : `<span class="ref-no">No referral</span>`;
+      return `
+        <tr onclick="openDetail('${a.id}')" style="cursor:pointer">
+          <td class="c-co">
+            <div class="co-name">${co}</div>
+            ${a.hm ? `<div class="co-sub">${escHtml(a.hm)}</div>` : ''}
+          </td>
+          <td class="c-role">${escHtml(a.role)}</td>
+          <td class="c-st"><span class="badge ${sc}">${a.status}</span></td>
+          <td class="c-dt" style="color:var(--text-2);font-size:12px">${fmtDate(a.date)}</td>
+          <td class="c-pr"><span class="${priClass(a.priority)}">${a.priority}</span></td>
+          <td class="c-ref">${ref}</td>
+          <td class="c-next"><span class="next-txt" title="${escHtml(a.next || '')}">${escHtml(a.next || '—')}</span></td>
+          <td class="c-act" onclick="event.stopPropagation()">
+            <div class="row-actions">
+              <button class="icon-btn" onclick="openModal('${a.id}')" title="Edit">&#9998;</button>
+              <button class="icon-btn danger" onclick="deleteApp('${a.id}')" title="Delete">&#128465;</button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  /* ── Detail panel ─────────────────────────────────────────────── */
+  function openDetail(id) {
+    const a = apps.find(x => x.id === id);
+    if (!a) return;
+    detailId = id;
+    const sc = STATUS_CLASS[a.status] || 's-applied';
+    document.getElementById('detail-content').innerHTML = `
+      <div style="margin-bottom:1.25rem">
+        <div class="detail-company">${escHtml(a.company)}</div>
+        <div class="detail-role">${escHtml(a.role)}</div>
+        <span class="badge ${sc}" style="margin-bottom:.5rem">${a.status}</span>
+      </div>
+      <div>
+        ${row('Priority',  `<span class="${priClass(a.priority)}">${a.priority}</span>`)}
+        ${row('Date applied', fmtDate(a.date))}
+        ${row('Salary / CTC', a.salary || '—')}
+        ${row('Referral', a.referral || '—')}
+        ${row('Team / HM', a.hm || '—')}
+        ${row('Interview rounds', a.rounds || '—')}
+        ${row('Next action', `<strong>${escHtml(a.next || '—')}</strong>`)}
+        ${a.url ? row('Job URL', `<a href="${escHtml(a.url)}" target="_blank" rel="noopener" style="color:var(--blue-text)">View posting</a>`) : ''}
+      </div>
+      ${a.notes ? `
+        <div class="detail-notes-section">
+          <div class="detail-notes-label">Notes</div>
+          <div class="detail-notes-body">${escHtml(a.notes)}</div>
+        </div>` : ''}
+      <div class="detail-actions">
+        <button class="detail-edit-btn" onclick="openModal('${a.id}');closeDetail()">Edit application</button>
+      </div>`;
+
+    document.getElementById('detail-overlay').classList.add('open');
+    document.getElementById('detail-panel').classList.add('open');
+  }
+
+  function row(k, v) {
+    return `<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`;
+  }
+
+  function closeDetail() {
+    document.getElementById('detail-overlay').classList.remove('open');
+    document.getElementById('detail-panel').classList.remove('open');
+    detailId = null;
+  }
+
+  /* ── Modal ────────────────────────────────────────────────────── */
+  const FIELDS = ['company','role','status','priority','date','salary','url','referral','hm','rounds','next','notes'];
+
+  function openModal(id) {
+    editId = id || null;
+    document.getElementById('modal-title').textContent = id ? 'Edit application' : 'Add application';
+    if (id) {
+      const a = apps.find(x => x.id === id);
+      if (!a) return;
+      FIELDS.forEach(f => {
+        const el = document.getElementById('f-' + f);
+        if (el) el.value = a[f] || '';
+      });
+    } else {
+      FIELDS.forEach(f => {
+        const el = document.getElementById('f-' + f);
+        if (el) el.value = '';
+      });
+      document.getElementById('f-status').value   = 'Applied';
+      document.getElementById('f-priority').value = 'High';
+      document.getElementById('f-date').value     = new Date().toISOString().split('T')[0];
+    }
+    document.getElementById('modal-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('f-company').focus(), 50);
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    editId = null;
+  }
+
+  function overlayClick(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  }
+
+  function saveApp() {
+    const company = document.getElementById('f-company').value.trim();
+    const role    = document.getElementById('f-role').value.trim();
+    if (!company) { document.getElementById('f-company').focus(); showToast('Company name is required'); return; }
+    if (!role)    { document.getElementById('f-role').focus();    showToast('Role is required');         return; }
+
+    const a = { id: editId || uid() };
+    FIELDS.forEach(f => { a[f] = (document.getElementById('f-' + f)?.value || '').trim(); });
+
+    if (editId) {
+      const i = apps.findIndex(x => x.id === editId);
+      if (i >= 0) apps[i] = a;
+    } else {
+      apps.unshift(a);
+    }
+    closeModal();
+    saveData();
+    render();
+    showToast(editId ? 'Application updated' : 'Application added');
+  }
+
+  function deleteApp(id) {
+    if (!confirm('Delete this application?')) return;
+    apps = apps.filter(x => x.id !== id);
+    saveData();
+    render();
+    showToast('Deleted');
+  }
+
+  function clearAll() {
+    if (!confirm('Delete ALL applications? This cannot be undone.')) return;
+    apps = [];
+    saveData();
+    render();
+    showToast('All data cleared');
+  }
+
+  /* ── Export CSV ───────────────────────────────────────────────── */
+  function exportCSV() {
+    const headers = ['Company','Role','Status','Priority','Date Applied','Salary','Referral','Team/HM','Interview Rounds','Next Action','Notes','URL'];
+    const rows = apps.map(a => [
+      a.company, a.role, a.status, a.priority, a.date, a.salary || '',
+      a.referral || '', a.hm || '', a.rounds || '', a.next || '', (a.notes || '').replace(/\n/g,' '), a.url || ''
+    ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+    const csv = [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'job-applications.csv';
+    a.click(); URL.revokeObjectURL(url);
+    showToast('CSV exported');
+  }
+
+  /* ── Toast ────────────────────────────────────────────────────── */
+  let toastTimer;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+  }
+
+  /* ── Keyboard shortcuts ───────────────────────────────────────── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeModal(); closeDetail(); }
+    if (e.key === 'n' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') openModal();
+  });
+
+  /* ── Escape HTML ─────────────────────────────────────────────── */
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ── Init ─────────────────────────────────────────────────────── */
+  loadData();
+  render();
+</script>
+</body>
+</html>
